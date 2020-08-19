@@ -4,7 +4,7 @@ class ItkstripRunControl: public eudaq::RunControl{
 public:
   ItkstripRunControl(const std::string & listenaddress);
   void DoStatus(eudaq::ConnectionSPC id,
-  		std::shared_ptr<const eudaq::Status> status) override;
+		std::shared_ptr<const eudaq::Status> status) override;
   void Configure() override;
   void Exec() override;
   static const uint32_t m_id_factory = eudaq::cstr2hash("ItkstripRunControl");
@@ -29,7 +29,7 @@ ItkstripRunControl::ItkstripRunControl(const std::string & listenaddress)
 }
 
 void ItkstripRunControl::DoStatus(eudaq::ConnectionSPC id,
-				std::shared_ptr<const eudaq::Status> status){
+				  std::shared_ptr<const eudaq::Status> status){
   if(id->GetType()+"."+id->GetName() == m_check_full_name){
     std::string ev_str = status->GetTag("EventN");
     uint32_t evn = 0;

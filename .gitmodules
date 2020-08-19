@@ -1,0 +1,3 @@
+[submodule "testbeam_desync"]
+	path = testbeam_desync
+	url = https://:@gitlab.cern.ch:8443/ebuchana/testbeam_desync.git

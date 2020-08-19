@@ -1,10 +1,22 @@
 #include "eudaq/OptionParser.hh"
 #include "eudaq/FileReader.hh"
 #include "eudaq/StdEventConverter.hh"
+#include "eudaq/Event.hh"
+
+#include <iostream>
+#include <fstream> 
 
 #include <iostream>
 
 int main(int /*argc*/, const char **argv) {
+  std::ofstream outfile_BCID ("BCID.txt");
+  std::ofstream outfile_TTC ("TTC.txt");
+  std::ofstream outfile_event ("event_numbers.txt");
+  std::ofstream outfile_event_skip ("event_skip.txt");
+
+  //  std::ofstream outfile_L0ID ("L0ID.txt"); //not currently needed for desync
+  //  std::ofstream outfile_L0ID_ev ("L0ID_ev.txt"); //not currently needed for desync 
+
   eudaq::OptionParser op("EUDAQ Command Line FileReader modified for TLU", "2.1", "EUDAQ FileReader (TLU)");
   eudaq::Option<std::string> file_input(op, "i", "input", "", "string", "input file");
   eudaq::Option<uint32_t> eventl(op, "e", "event", 0, "uint32_t", "event number low");
@@ -36,7 +48,10 @@ int main(int /*argc*/, const char **argv) {
 
   eudaq::FileReaderUP reader;
   reader = eudaq::Factory<eudaq::FileReader>::MakeUnique(eudaq::str2hash(type_in), infile_path);
-  uint32_t event_count = 0;
+  
+  //  int yes_L0ID=0; //not currently needed for desync
+  //  int no_L0ID=0;  //not currently needed for desync
+
 
   while(1){
     auto ev = reader->GetNextEvent();
@@ -72,19 +87,65 @@ int main(int /*argc*/, const char **argv) {
     }
     else
       in_range_tsn = true;
+  
+    //Desync edits start here
+    //    if((in_range_evn && in_range_tgn && in_range_tsn) && not_all_zero){
+    //
+    //      if(stdev_v){
+
+    auto evstd = eudaq::StandardEvent::MakeShared();
+    eudaq::StdEventConverter::Convert(ev, evstd, nullptr);
+
+    uint32_t ev_n = ev->GetEventN();
+    int BCID  = 100;
+    int TTCBCID =100;
+    //    int L0ID =-1; //not currently needed for desync 
+
+    BCID = evstd->GetTag("RAWBCID", BCID); //ABCStar   
+    TTCBCID = evstd->GetTag("TTC.BCID", TTCBCID); //ITSDAQ
+    //    L0ID = evstd->GetTag("RAWL0ID", L0ID); //ABCSTAR //not currently needed for desycn 
+    //    std::cout << L0ID << std::endl;
+    
+    //if there is both a RAWBCID and TTCBCID for an event then keep the event otherwise ignore the event 
+    if(BCID<100 && TTCBCID<100){
+      outfile_BCID << BCID << std::endl;
+      outfile_TTC << TTCBCID << std::endl;
+      outfile_event << ev_n << std::endl;    
+    }      
 
 
-    if((in_range_evn && in_range_tgn && in_range_tsn) && not_all_zero){
-      ev->Print(std::cout);
-      if(stdev_v){
-        auto evstd = eudaq::StandardEvent::MakeShared();
-        eudaq::StdEventConverter::Convert(ev, evstd, nullptr);
-        std::cout<< ">>>>>"<< evstd->NumPlanes() <<"<<<<"<<std::endl;
-      }
+    /*
+    if(L0ID!=-1){      
+      outfile_L0ID << L0ID <<std::endl;
+      outfile_L0ID_ev << ev_n <<std::endl;
+    }
+    */
+    
+    //txt file with the events that have been skipped, good for debugging 
+    if(BCID>80 || TTCBCID>80){
+      outfile_event_skip << ev_n << std::endl;
     }
     
-    event_count ++;
+  
+    
+   //    event_count ++;
   }
-  std::cout<< "There are "<< event_count << "Events"<<std::endl;
+  //  outfile1.close();
+  outfile_BCID.close();
+  outfile_TTC.close();
+  outfile_event.close();
+  outfile_event_skip.close();
+
+
+  //  outfile_L0ID.close();
+
+    
+
+
+
+
+
   return 0;
 }
+
+

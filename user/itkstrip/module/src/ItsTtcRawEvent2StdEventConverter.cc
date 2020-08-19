@@ -58,6 +58,12 @@ bool ItsTtcRawEvent2StdEventConverter::Converting(eudaq::EventSPC d1, eudaq::Std
       uint32_t L0ID = (uint32_t)(data >> 40) & 0xffff;
       d2->SetTag("TS.DATA", timestamp);
       d2->SetTag("TS.L0ID", L0ID);
+
+      //Desync edits start here--------------------------------------    
+      int TTCBCID = (((timestamp << 1) &0x00f) >>1);
+      d2->SetTag("TTC.BCID", TTCBCID); //ITSDAQ                          
+      //Desync edits ends here-------------------------------------      
+
       break;
     }
     case 0x0:
